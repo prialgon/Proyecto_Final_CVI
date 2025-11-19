@@ -9,6 +9,7 @@ import numpy as np
 import glob
 
 calibration_img_path = "data/calibration/calibration_imgs/alvaro_laptop/*.jpg"
+show_images = False
 
 
 def find_corners(imgs: List[cv2.typing.MatLike]) -> List[tuple[bool, cv2.typing.MatLike]]:
@@ -48,8 +49,11 @@ if __name__ == "__main__":
     # Load images
     imgs = load_images(gb_path)
 
+    for i in range(len(imgs)):
+        imgs[i] = cv2.cvtColor(imgs[i], cv2.COLOR_BGR2RGB)
+
     # Get gray images
-    imgs_gray = [cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) for img in imgs]
+    imgs_gray = [cv2.cvtColor(img, cv2.COLOR_RGB2GRAY) for img in imgs]
     img_size = imgs_gray[0].shape
 
     # Find corners
@@ -59,6 +63,9 @@ if __name__ == "__main__":
     valid_corners = filter_corner_detections(corners)
 
     # Refine corner detection
+    refined_corners = refine_corners(imgs_gray, valid_corners)
+
+    # Copy corners
     valid_corners_copy = copy.deepcopy(valid_corners)
 
     # Get real chessboard points
@@ -66,10 +73,10 @@ if __name__ == "__main__":
         CHESSBOARD_INNER_CORNERS_SIZE, CHESSBOARD_SQUARE_SIZE, CHESSBOARD_SQUARE_SIZE) for _ in range(len(valid_corners_copy))]
 
     # Get calibration parameters
-    valid_corners = np.asarray(valid_corners_copy, dtype=np.float32)
+    final_corners = np.asarray(valid_corners_copy, dtype=np.float32)
 
     rms, intrinsics, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
-        chessboard_points, valid_corners, img_size, None, None)
+        chessboard_points, final_corners, img_size, None, None)
 
     # Obtain extrinsics
     extrinsics = list(map(lambda rvec, tvec: np.hstack(
@@ -79,3 +86,8 @@ if __name__ == "__main__":
     print("Intrinsics:\n", intrinsics)
     print("Distortion coefficients:\n", dist_coeffs)
     print("Root mean squared reprojection error:\n", rms)
+
+    if show_images:
+        for i in range(len(valid_corners)):
+            show_image(cv2.drawChessboardCorners(
+                imgs[i], CHESSBOARD_INNER_CORNERS_SIZE, valid_corners[i], corners[i][0]))
