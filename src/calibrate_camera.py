@@ -9,7 +9,7 @@ import numpy as np
 import glob
 
 calibration_img_path = "data/calibration/calibration_imgs/alvaro_laptop/*.jpg"
-show_images = False
+show_images = True
 
 
 def find_corners(imgs: List[cv2.typing.MatLike]) -> List[tuple[bool, cv2.typing.MatLike]]:
