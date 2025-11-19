@@ -8,7 +8,7 @@ from typing import List
 import numpy as np
 import glob
 
-calibration_img_path = "../data/left"
+calibration_img_path = "data/calibration/calibration_imgs/alvaro_laptop/*.jpg"
 
 
 def find_corners(imgs: List[cv2.typing.MatLike]) -> List[tuple[bool, cv2.typing.MatLike]]:
@@ -22,7 +22,7 @@ def filter_corner_detections(corners: List[tuple[bool, cv2.typing.MatLike]]) -> 
     valid_corners = []
     for cor in corners:
         if cor[0]:
-            valid_corners.append(cor)
+            valid_corners.append(cor[1])
 
     return valid_corners
 
@@ -47,10 +47,10 @@ if __name__ == "__main__":
 
     # Load images
     imgs = load_images(gb_path)
-    img_size = imgs[0].shape
 
     # Get gray images
     imgs_gray = [cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) for img in imgs]
+    img_size = imgs_gray[0].shape
 
     # Find corners
     corners = find_corners(imgs)
@@ -66,7 +66,7 @@ if __name__ == "__main__":
         CHESSBOARD_INNER_CORNERS_SIZE, CHESSBOARD_SQUARE_SIZE, CHESSBOARD_SQUARE_SIZE) for _ in range(len(valid_corners_copy))]
 
     # Get calibration parameters
-    valid_corners = np.asarray(valid_corners, dtype=np.float32)
+    valid_corners = np.asarray(valid_corners_copy, dtype=np.float32)
 
     rms, intrinsics, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
         chessboard_points, valid_corners, img_size, None, None)
