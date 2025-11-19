@@ -1,11 +1,12 @@
 from PIL import Image, ImageDraw
 import os
+import math
 
 WORKDIR = os.getcwd()
 
-patterns_path = "security_system/patterns"
+patterns_path = "data/security_system_patterns"
 
-figures_to_create = [("triangle", "red"), ("circle", "blue"),
+figures_to_create = [("triangle", "red"), ("hexagon", "blue"),
                      ("square", "green"), ("star", "orange")]
 
 
@@ -30,15 +31,22 @@ def create_shape_image(shape, color, filename):
     elif shape == "square":
         draw.rectangle([left, top, right, bottom], fill=color)
 
-    elif shape == "circle":
-        draw.ellipse([left, top, right, bottom], fill=color)
+    elif shape == "hexagon":
+        cx, cy = 500, 500
+        r = 400  # radius
+        points = []
+        for i in range(6):
+            angle = math.radians(60 * i - 90)
+            x = cx + r * math.cos(angle)
+            y = cy + r * math.sin(angle)
+            points.append((x, y))
+        draw.polygon(points, fill=color)
 
     elif shape == "star":
         cx, cy = 500, 500
         r_outer = 400
         r_inner = 180
         points = []
-        import math
         for i in range(10):
             angle = math.radians(i * 36 - 90)
             r = r_outer if i % 2 == 0 else r_inner
@@ -58,7 +66,7 @@ if __name__ == "__main__":
         figure_type = figure[0]
         colour = figure[1]
 
-        if figure_type not in ["triangle", "square", "circle", "star"]:
+        if figure_type not in ["triangle", "square", "hexagon", "star"]:
             print(f"{figure_type} is not allowed.")
             continue
 

@@ -1,10 +1,12 @@
 import os
+import cv2.typing
 from auxiliary import *
 import cv2
 from constants import CHESSBOARD_INNER_CORNERS_SIZE, CHESSBOARD_SQUARE_SIZE
 import copy
 from typing import List
 import numpy as np
+import glob
 
 calibration_img_path = "../data/left"
 
@@ -41,11 +43,10 @@ def refine_corners(imgs_gray: List[cv2.typing.MatLike], corners: List[cv2.typing
 if __name__ == "__main__":
     # Compute paths to images
     full_path = os.path.join(os.getcwd(), calibration_img_path)
-    imgs_path = [os.path.join(full_path, i)
-                 for i in os.listdir(full_path)]
+    gb_path = glob.glob(full_path)
 
     # Load images
-    imgs = load_images(imgs_path)
+    imgs = load_images(gb_path)
     img_size = imgs[0].shape
 
     # Get gray images

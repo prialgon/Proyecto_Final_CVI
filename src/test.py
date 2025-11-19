@@ -2,6 +2,7 @@ import cv2
 import os
 import numpy as np
 
+
 def main(camera_index=0, width=1280, height=720):
     cap = cv2.VideoCapture(camera_index)
     if not cap.isOpened():
@@ -16,11 +17,9 @@ def main(camera_index=0, width=1280, height=720):
 
     kf = kalman()
 
-
     measurement = np.array((2, 1), np.float32)
     prediction = np.zeros((2, 1), np.float32)
     trained = False
-
 
     term_crit = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 30, 1)
 
@@ -30,11 +29,9 @@ def main(camera_index=0, width=1280, height=720):
             if not ret:
                 print("No frame received (the camera may have been disconnected).")
                 break
-            
+
             # Optional: flip horizontally (mirror), comment out if not desired
             frame = cv2.flip(frame, 1)
-
-            
 
             # Wait 1 ms for a key; exit with 'q' or ESC
             key = cv2.waitKey(1) & 0xFF
@@ -62,8 +59,8 @@ def main(camera_index=0, width=1280, height=720):
                 hsv_crop = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)
                 # TODO: Compute the histogram of the cropped object (Reminder: Use only the Hue channel (0-180))
                 mask = cv2.inRange(hsv_crop,
-                                np.array((0., 60., 32.)),
-                                np.array((180., 255., 255.)))
+                                   np.array((0., 60., 32.)),
+                                   np.array((180., 255., 255.)))
                 crop_hist = cv2.calcHist([hsv_crop], [0], mask=mask, histSize=[
                     32], ranges=[0, 180])
                 cv2.normalize(crop_hist, crop_hist, 0, 255, cv2.NORM_MINMAX)
@@ -71,7 +68,7 @@ def main(camera_index=0, width=1280, height=720):
             elif trained:
                 # TODO: Copy the frame
                 input_frame = frame.copy()
-                
+
                 mask = np.zeros(input_frame.shape[:2], dtype="uint8")
 
                 mask = cv2.rectangle(mask, (800, 100), (1280, 580), 255,  -1)
@@ -81,10 +78,12 @@ def main(camera_index=0, width=1280, height=720):
                 img_hsv = cv2.cvtColor(masked, cv2.COLOR_BGR2HSV)
 
                 # Compute the back projection of the histogram
-                img_bproject = cv2.calcBackProject([img_hsv], [0], crop_hist, [0, 180], 1)
+                img_bproject = cv2.calcBackProject(
+                    [img_hsv], [0], crop_hist, [0, 180], 1)
 
                 # Apply the mean shift algorithm to the back projection
-                ret, track_window = cv2.meanShift(img_bproject, track_window, term_crit)
+                ret, track_window = cv2.meanShift(
+                    img_bproject, track_window, term_crit)
                 x_, y_, w_, h_ = track_window
                 # TODO: Compute the center of the object
                 c_x = x_ + w_/2
@@ -99,8 +98,9 @@ def main(camera_index=0, width=1280, height=720):
 
                 # Draw the predicted position
                 cv2.circle(input_frame, (int(prediction[0][0]), int(
-                prediction[1][0])), 5, (0, 0, 255), -1)
-                cv2.circle(input_frame, (int(c_x), int(c_y)), 5, (0, 255, 0), -1)
+                    prediction[1][0])), 5, (0, 0, 255), -1)
+                cv2.circle(input_frame, (int(c_x), int(c_y)),
+                           5, (0, 255, 0), -1)
 
                 # Show the frame with the predicted position
                 cv2.imshow(window_name, input_frame)
@@ -111,25 +111,21 @@ def main(camera_index=0, width=1280, height=720):
                 # Display the frame
                 cv2.imshow(window_name, frame)
 
-
-
-
-
     except KeyboardInterrupt:
         pass
     finally:
         cap.release()
         cv2.destroyAllWindows()
 
+
 def kalman():
     kf = cv2.KalmanFilter(4, 2)
-
 
     # TODO: Initialize the state of the Kalman filter
     dt = 1/30
     kf.measurementMatrix = np.array([[1, 0, 0, 0],
                                     # Measurement matrix np.array of shape (2, 4) and type np.float32
-                                    [0, 1, 0, 0]], dtype=np.float32)
+                                     [0, 1, 0, 0]], dtype=np.float32)
     kf.transitionMatrix = np.array([[1, 0, dt, 0],
                                     [0, 1, 0, dt],
                                     [0, 0, 1, 0],
@@ -139,7 +135,6 @@ def kalman():
     kf.processNoiseCov = np.eye(4, dtype=np.float32) * 0.03
 
     return kf
-
 
 
 """
@@ -194,5 +189,3 @@ def kalman():
 if __name__ == "__main__":
     # If the built-in webcam is not at index 0, change the first argument: main(1)
     main(camera_index=0, width=1280, height=720)
-
-
