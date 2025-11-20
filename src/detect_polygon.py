@@ -1,13 +1,8 @@
 import cv2
 import os
 import glob
+from auxiliary import *
 
-# EXECUTE FROM /Proyecto_Final_CVI and use: python -m src.security_system.detect_polygon
-try:
-    from ..auxiliary import *
-except:
-    raise ImportError(
-        "EXECUTE FROM /Proyecto_Final_CVI and use: python -m src.security_system.detect_polygon")
 
 WORKDIR = os.getcwd()
 patterns_path = "data/security_system_patterns/*.png"
@@ -19,7 +14,7 @@ gb_path = glob.glob(path)
 
 imgs = load_images(gb_path)
 
-i = 0
+i = 4
 
 img = imgs[i]
 
@@ -33,7 +28,7 @@ contours, _ = cv2.findContours(
     edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
 for cnt in contours:
-    if cv2.contourArea(cnt) < 500:
+    if cv2.contourArea(cnt) < 200:
         continue
 
     epsilon = 0.02 * cv2.arcLength(cnt, True)
@@ -43,7 +38,7 @@ for cnt in contours:
 
     for point in approx:
         x, y = point.ravel()
-        cv2.circle(img, (x, y), 6, (0, 0, 255), -1)
+        cv2.circle(img, (x, y), 6, (0, 255, 0), -1)
 
 show_image(edges)
 show_image(img)
