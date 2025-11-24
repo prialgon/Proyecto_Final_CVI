@@ -41,16 +41,16 @@ upper_red1 = np.array([10, 255, 255])
 lower_red2 = np.array([170, 150, 150])
 upper_red2 = np.array([180, 255, 255])
 
-# --- Vibrant BLUE ---
-lower_blue = np.array([95, 150, 150])
+# --- BLUE (vibrant + darker) ---
+lower_blue = np.array([110, 100, 80])
 upper_blue = np.array([130, 255, 255])
 
-# --- Vibrant GREEN ---
-lower_green = np.array([40, 150, 150])
+# --- GREEN (vibrant + darker) ---
+lower_green = np.array([40, 100, 80])
 upper_green = np.array([85, 255, 255])
 
-# --- Vibrant ORANGE ---
-lower_orange = np.array([10, 150, 150])
+# --- ORANGE (vibrant + darker) ---
+lower_orange = np.array([10, 150, 120])
 upper_orange = np.array([25, 255, 255])
 
 
@@ -60,6 +60,8 @@ while True:
     # frame = 255 - cv2.absdiff(clean_frame, frame_before)
 
     frame = cv2.flip(frame, 1)
+
+    orig_frame = frame.copy()
 
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
@@ -76,7 +78,7 @@ while True:
     green_frame = cv2.bitwise_and(frame, frame, mask=green_mask)
     orange_frame = cv2.bitwise_and(frame, frame, mask=orange_mask)
 
-    frame = green_frame
+    frame = blue_frame
 
     key = cv2.waitKey(1) & 0xFF
     if key == ord('q') or key == 27:
@@ -86,8 +88,6 @@ while True:
 
     blur = cv2.GaussianBlur(gray, (5, 5),
                             cv2.BORDER_DEFAULT)
-    # ret, thresh = cv2.threshold(blur, 200, 255,
-    #                             cv2.THRESH_BINARY_INV)
 
     edges = cv2.Canny(gray, 1, 1)
 
@@ -101,15 +101,29 @@ while True:
         epsilon = 0.02 * cv2.arcLength(cnt, True)
         approx = cv2.approxPolyDP(cnt, epsilon, True)
 
-        cv2.drawContours(frame, [approx], -1, (255, 255, 255), 2)
+        # cv2.drawContours(frame, [approx], -1, (255, 255, 255), 2)
 
-        if len(approx) > 10:
+        print(len(approx))
+
+        # Star: 10
+        # Triangle: 3/4
+        # Rectangle: 4
+        # Hexagon:6
+
+        if len(approx) < 6:
             break
 
-        for point in approx:
-            x, y = point.ravel()
-            cv2.circle(frame, (x, y), 6, (255, 255, 255), -1)
+        # for point in approx:
+        #     x, y = point.ravel()
+        #     cv2.circle(frame, (x, y), 6, (255, 255, 255), -1)
 
-    cv2.imshow(window_name, frame)
+        M = cv2.moments(cnt)
+        if M['m00'] != 0:
+            cx = int(M['m10']/M['m00'])
+            cy = int(M['m01']/M['m00'])
+            cv2.drawContours(orig_frame, [cnt], -1, (0, 255, 0), 2)
+            cv2.circle(orig_frame, (cx, cy), 7, (0, 0, 255), -1)
+
+    cv2.imshow(window_name, orig_frame)
 
     # frame_before = clean_frame
