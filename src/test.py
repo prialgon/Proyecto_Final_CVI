@@ -1,7 +1,7 @@
 import cv2
 import os
 import numpy as np
-
+import time
 
 def main(camera_index=0, width=1280, height=720):
     cap = cv2.VideoCapture(camera_index)
@@ -15,16 +15,27 @@ def main(camera_index=0, width=1280, height=720):
     window_name = "Live Camera - press 'q' to quit"
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)  # resizable window
 
-    kf = kalman()
+    # kf = kalman()
 
-    measurement = np.array((2, 1), np.float32)
-    prediction = np.zeros((2, 1), np.float32)
+    # measurement = np.array((2, 1), np.float32)
+    # prediction = np.zeros((2, 1), np.float32)
     trained = False
 
     term_crit = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 30, 1)
 
+    tracker = cv2.legacy.TrackerKCF()
+    
+    track_window = x, y, w, h = (1000, 100, 1280-1000, 580)
+    
+    lasttime = time.perf_counter()
+    
     try:
         while True:
+            actual = time.perf_counter()
+
+            deltatime = actual - lasttime
+
+            lasttime = actual
             ret, frame = cap.read()
             if not ret:
                 print("No frame received (the camera may have been disconnected).")
@@ -38,75 +49,42 @@ def main(camera_index=0, width=1280, height=720):
             if key == ord('q') or key == 27:
                 break
             elif key == ord('s'):
-                # x, y, w, h = cv2.selectROI('Frame', frame, False)
-                track_window = x, y, w, h = (800, 100, 1280-800, 580)
+                
+                kcf = tracker.create()
+                mask = np.zeros(frame.shape[:2], dtype="uint8")
 
-                cx = x + w/2
-                cy = y + h/2
+                mask = cv2.rectangle(mask, (800, 0), (1280, 720), 255,  -1)
 
-                kf.statePost = np.array([[cx], [cy], [0], [0]], np.float32)
-                # Initialize the covariance matrix
-                kf.errorCovPost = np.eye(4, dtype=np.float32)
-                # Predict the position of the object
-                prediction = kf.predict()
-
-                # TODO: Update the measurement and correct the Kalman filter
-                measurement = np.array([[cx], [cy]], np.float32)
-                kf.correct(measurement)
-
-                # TODO: Crop the object
-                crop = frame[y:y+h, x:x+w].copy()
-                hsv_crop = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)
-                # TODO: Compute the histogram of the cropped object (Reminder: Use only the Hue channel (0-180))
-                mask = cv2.inRange(hsv_crop,
-                                   np.array((0., 60., 32.)),
-                                   np.array((180., 255., 255.)))
-                crop_hist = cv2.calcHist([hsv_crop], [0], mask=mask, histSize=[
-                    32], ranges=[0, 180])
-                cv2.normalize(crop_hist, crop_hist, 0, 255, cv2.NORM_MINMAX)
+                masked = cv2.bitwise_and(frame, frame, mask=mask)
+                kcf.init(masked, track_window)
                 trained = True
+                
             elif trained:
-                # TODO: Copy the frame
-                input_frame = frame.copy()
+                mask = np.zeros(frame.shape[:2], dtype="uint8")
 
-                mask = np.zeros(input_frame.shape[:2], dtype="uint8")
+                mask = cv2.rectangle(mask, (800, 0), (1280, 720), 255,  -1)
+                masked = cv2.bitwise_and(frame, frame, mask=mask)
+                
+                detected, roi = kcf.update(masked)
+                pt1 = (int(roi[0]), int(roi[1]))
 
-                mask = cv2.rectangle(mask, (800, 100), (1280, 580), 255,  -1)
 
-                masked = cv2.bitwise_and(input_frame, input_frame, mask=mask)
-                # TODO: Convert the frame to HSV
-                img_hsv = cv2.cvtColor(masked, cv2.COLOR_BGR2HSV)
+                pt2 = (int(roi[0] + roi[2]), int(roi[1] + roi[3]))
 
-                # Compute the back projection of the histogram
-                img_bproject = cv2.calcBackProject(
-                    [img_hsv], [0], crop_hist, [0, 180], 1)
-
-                # Apply the mean shift algorithm to the back projection
-                ret, track_window = cv2.meanShift(
-                    img_bproject, track_window, term_crit)
-                x_, y_, w_, h_ = track_window
-                # TODO: Compute the center of the object
-                c_x = x_ + w_/2
-                c_y = y_ + h_/2
-
-                # Predict the position of the object
-                prediction = kf.predict()
-
-                # TODO: Update the measurement and correct the Kalman filter
-                measurement = np.array([[c_x], [c_y]], np.float32)
-                kf.correct(measurement)
-
-                # Draw the predicted position
-                cv2.circle(input_frame, (int(prediction[0][0]), int(
-                    prediction[1][0])), 5, (0, 0, 255), -1)
-                cv2.circle(input_frame, (int(c_x), int(c_y)),
-                           5, (0, 255, 0), -1)
-
-                # Show the frame with the predicted position
-                cv2.imshow(window_name, input_frame)
+                if detected:
+                    rectframe = cv2.rectangle(frame, pt1, pt2, 255, -1)
+                    
+                    cv2.putText(rectframe, f'{int(1/(deltatime))} FPS', (0, 20), cv2.FONT_HERSHEY_SIMPLEX,
+                                        1, (255, 0, 0), 2, cv2.LINE_AA)
+                    cv2.imshow(window_name, rectframe)
+                else:
+                    cv2.imshow(window_name, frame)
             else:
                 frame = cv2.rectangle(
-                    frame, (800, 100), (1280, 580), color=(0, 0, 255), thickness=2)
+                    frame, (1000, 100), (1280, 580), color=(0, 0, 255), thickness=2)
+                
+                cv2.putText(frame, f'{int(1/(deltatime))} FPS', (0, 20), cv2.FONT_HERSHEY_SIMPLEX,
+                            1, (255, 0, 0), 2, cv2.LINE_AA)
 
                 # Display the frame
                 cv2.imshow(window_name, frame)
