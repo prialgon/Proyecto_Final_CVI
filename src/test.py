@@ -25,13 +25,13 @@ def main(camera_index=0, width=1280, height=720):
 
     tracker = cv2.legacy.TrackerKCF()
     
-    track_window = x, y, w, h = (1000, 100, 1280-1000, 580)
+    track_window = x, y, w, h = (200, 200, 1280-1000, 480-200)
     
-    lasttime = time.perf_counter()
+    lasttime = time.time()-1
     
     try:
         while True:
-            actual = time.perf_counter()
+            actual = time.time()
 
             deltatime = actual - lasttime
 
@@ -51,25 +51,27 @@ def main(camera_index=0, width=1280, height=720):
             elif key == ord('s'):
                 
                 kcf = tracker.create()
-                mask = np.zeros(frame.shape[:2], dtype="uint8")
+                # mask = np.zeros(frame.shape[:2], dtype="uint8")
 
-                mask = cv2.rectangle(mask, (800, 0), (1280, 720), 255,  -1)
-
-                masked = cv2.bitwise_and(frame, frame, mask=mask)
+                # mask = cv2.rectangle(mask, (800, 0), (1280, 720), 255,  -1)
+                
+                masked = frame[0:720, 800:1280]
+                print(masked.shape)
+                # masked = cv2.bitwise_and(frame, frame, mask=mask)
                 kcf.init(masked, track_window)
                 trained = True
                 
             elif trained:
-                mask = np.zeros(frame.shape[:2], dtype="uint8")
+                # mask = np.zeros(frame.shape[:2], dtype="uint8")
 
-                mask = cv2.rectangle(mask, (800, 0), (1280, 720), 255,  -1)
-                masked = cv2.bitwise_and(frame, frame, mask=mask)
-                
+                # mask = cv2.rectangle(mask, (800, 0), (1280, 720), 255,  -1)
+                # masked = cv2.bitwise_and(frame, frame, mask=mask)
+                masked = frame[0:720, 800:1280]
                 detected, roi = kcf.update(masked)
-                pt1 = (int(roi[0]), int(roi[1]))
+                pt1 = (int(roi[0])+800, int(roi[1]))
 
 
-                pt2 = (int(roi[0] + roi[2]), int(roi[1] + roi[3]))
+                pt2 = (int(roi[0]+800 + roi[2]), int(roi[1] + roi[3]))
 
                 if detected:
                     rectframe = cv2.rectangle(frame, pt1, pt2, 255, -1)
@@ -81,7 +83,7 @@ def main(camera_index=0, width=1280, height=720):
                     cv2.imshow(window_name, frame)
             else:
                 frame = cv2.rectangle(
-                    frame, (1000, 100), (1280, 580), color=(0, 0, 255), thickness=2)
+                    frame, (1000, 200), (1280, 480), color=(0, 0, 255), thickness=2)
                 
                 cv2.putText(frame, f'{int(1/(deltatime))} FPS', (0, 20), cv2.FONT_HERSHEY_SIMPLEX,
                             1, (255, 0, 0), 2, cv2.LINE_AA)
