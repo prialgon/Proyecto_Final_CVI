@@ -28,6 +28,11 @@ def main(camera_index=0, width=1280, height=720):
     track_window = x, y, w, h = (200, 200, 1280-1000, 480-200)
     
     lasttime = time.time()-1
+
+    ball_position = [10, 700]
+    ball_direction = [14, -14]
+
+    changed_vec = False
     
     try:
         while True:
@@ -55,41 +60,68 @@ def main(camera_index=0, width=1280, height=720):
 
                 # mask = cv2.rectangle(mask, (800, 0), (1280, 720), 255,  -1)
                 
-                masked = frame[0:720, 800:1280]
-                print(masked.shape)
+                masked = frame[0:720, 900:1280]
+                
                 # masked = cv2.bitwise_and(frame, frame, mask=mask)
                 kcf.init(masked, track_window)
                 trained = True
+
+                final_frame = frame
                 
             elif trained:
                 # mask = np.zeros(frame.shape[:2], dtype="uint8")
 
                 # mask = cv2.rectangle(mask, (800, 0), (1280, 720), 255,  -1)
                 # masked = cv2.bitwise_and(frame, frame, mask=mask)
-                masked = frame[0:720, 800:1280]
+                masked = frame[0:720, 900:1280]
                 detected, roi = kcf.update(masked)
-                pt1 = (int(roi[0])+800, int(roi[1]))
+                pt1 = (int(roi[0])+900, int(roi[1]))
 
 
-                pt2 = (int(roi[0]+800 + roi[2]), int(roi[1] + roi[3]))
+                pt2 = (int(roi[0]+900 + roi[2]), int(roi[1] + roi[3]))
 
                 if detected:
                     rectframe = cv2.rectangle(frame, pt1, pt2, 255, -1)
-                    
+                    if (ball_position[0] > pt1[0]) and (ball_position[1] > pt1[1] and ball_position[1] < pt2[1]):
+
+
+                        if not changed_vec:
+                            if (ball_direction[0] - pt1[0] < ball_direction[1] - pt1[1]) or (ball_direction[0] - pt1[0] < ball_direction[1] - pt2[1]):
+                                ball_direction = rebound(ball_direction, "x")
+                                
+                            else:
+                                ball_direction = rebound(ball_direction, "y")
+                            changed_vec = True
+                        else:
+                            changed_vec = False
                     cv2.putText(rectframe, f'{int(1/(deltatime))} FPS', (0, 20), cv2.FONT_HERSHEY_SIMPLEX,
                                         1, (255, 0, 0), 2, cv2.LINE_AA)
-                    cv2.imshow(window_name, rectframe)
+                    final_frame = rectframe
                 else:
-                    cv2.imshow(window_name, frame)
+                    final_frame = frame
             else:
                 frame = cv2.rectangle(
                     frame, (1000, 200), (1280, 480), color=(0, 0, 255), thickness=2)
                 
                 cv2.putText(frame, f'{int(1/(deltatime))} FPS', (0, 20), cv2.FONT_HERSHEY_SIMPLEX,
                             1, (255, 0, 0), 2, cv2.LINE_AA)
+                
+                final_frame = frame
 
                 # Display the frame
-                cv2.imshow(window_name, frame)
+
+            cv2.circle(final_frame, ball_position, 10, color=(0, 0, 255), thickness=-1)
+            cv2.imshow(window_name, final_frame)
+            
+            if ball_position[0] > 1275 or ball_position[0] < 5:
+                
+                ball_direction = rebound(ball_direction, "x")
+                    
+
+            if ball_position[1] < 5 or ball_position[1] > 715:
+                ball_direction = rebound(ball_direction, "y")
+            
+            ball_position = updateBallPosition(ball_position, ball_direction)
 
     except KeyboardInterrupt:
         pass
@@ -165,6 +197,29 @@ def kalman():
             break
 
     """
+
+def updateBallPosition(present, vec):
+    return [present[0] + vec[0], present[1] + vec[1]]
+
+def rebound(vec, dir):
+    vx, vy = vec
+    
+
+    if dir == "x":
+        vx = -vx
+
+    if dir == "y":
+        vy = -vy 
+    # MOD = 10
+    # angle = np.atan2(vec[1], vec[0])
+    # print(f"angle: {angle}, {angle*(360/(2*np.pi))}")
+    # new_angle = np.pi - angle
+    # # print(new_angle)
+    # new_vec = [np.intp(np.ceil(MOD * np.cos(new_angle))),
+    #            np.intp(np.ceil(MOD * np.sin(new_angle)))]
+    # print(new_vec)
+    return vx, vy
+
 
 if __name__ == "__main__":
     # If the built-in webcam is not at index 0, change the first argument: main(1)
