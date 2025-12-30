@@ -2,8 +2,9 @@ import cv2
 from security_system.security import security_system
 from security_system.constants import *
 
-SECURITY_PATTERN = [SQUARE, TRIANGLE, HEXAGON, PENTAGON]
+initital_security_pattern = [SQUARE, TRIANGLE, HEXAGON, PENTAGON]
 
+security_pattern = initital_security_pattern.copy()
 
 cap = cv2.VideoCapture(0)
 
@@ -18,7 +19,8 @@ while True:
 
     frame = cv2.flip(frame, 1)
 
-    frame = security_system(frame, SECURITY_PATTERN)
+    if len(security_pattern) > 0:
+        frame, security_pattern = security_system(frame, security_pattern)
 
     cv2.imshow("window", frame)
 

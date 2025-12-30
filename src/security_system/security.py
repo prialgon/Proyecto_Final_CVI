@@ -7,7 +7,9 @@ from security_system.utils import *
 kernel = np.ones((5, 5), np.uint8)
 
 
-def security_system(frame: cv2.typing.MatLike, security_pattern: List[str]) -> cv2.typing.MatLike:
+def security_system(frame: cv2.typing.MatLike, security_pattern: List[str]) -> Tuple[cv2.typing.MatLike, List[str]]:
+    detected_shapes = []
+
     # Flip so that the camera mirrors real video
     blurred = cv2.GaussianBlur(frame, (11, 11), 1)
     hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
@@ -38,7 +40,16 @@ def security_system(frame: cv2.typing.MatLike, security_pattern: List[str]) -> c
 
         contours = get_contours(mask)
 
-        detected_shapes = detect_shapes(
-            frame, contours, shape, color, draw_color)
+        detected_shapes.extend(detect_shapes(
+            frame, contours, shape, color, draw_color))
 
-    return frame
+    if len(detected_shapes) != 1:
+        return (frame, security_pattern)
+
+    shape = detected_shapes[0]
+
+    if shape[0] == security_pattern[0]:
+        print(shape)
+        security_pattern.pop(0)
+
+    return (frame, security_pattern)
