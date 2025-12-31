@@ -11,6 +11,8 @@ cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
+ctr = 0
+
 while True:
     success, frame = cap.read()
 
@@ -20,7 +22,8 @@ while True:
     frame = cv2.flip(frame, 1)
 
     if len(security_pattern) > 0:
-        frame, security_pattern = security_system(frame, security_pattern)
+        frame, security_pattern, ctr = security_system(
+            frame, security_pattern, ctr)
 
     cv2.imshow("window", frame)
 

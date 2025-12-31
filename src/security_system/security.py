@@ -7,7 +7,7 @@ from security_system.utils import *
 kernel = np.ones((5, 5), np.uint8)
 
 
-def security_system(frame: cv2.typing.MatLike, security_pattern: List[str]) -> Tuple[cv2.typing.MatLike, List[str]]:
+def security_system(frame: cv2.typing.MatLike, security_pattern: List[str], counter: int) -> Tuple[cv2.typing.MatLike, List[str], int]:
     detected_shapes = []
 
     # Flip so that the camera mirrors real video
@@ -44,12 +44,16 @@ def security_system(frame: cv2.typing.MatLike, security_pattern: List[str]) -> T
             frame, contours, shape, color, draw_color))
 
     if len(detected_shapes) != 1:
-        return (frame, security_pattern)
+        return (frame, security_pattern, 0)
 
     shape = detected_shapes[0]
 
     if shape[0] == security_pattern[0]:
-        print(shape)
-        security_pattern.pop(0)
+        if counter >= CONSEQUENT_CHECKS:
+            print(shape)
+            security_pattern.pop(0)
+            counter = 0
+        else:
+            counter += 1
 
-    return (frame, security_pattern)
+    return (frame, security_pattern, counter)

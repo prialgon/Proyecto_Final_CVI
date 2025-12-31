@@ -6,4 +6,6 @@ SQUARE = "square"
 PENTAGON = "pentagon"
 HEXAGON = "hexagon"
 
-SHAPE_AREA = 1000
+SHAPE_AREA = 2000
+
+CONSEQUENT_CHECKS = 15
