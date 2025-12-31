@@ -56,7 +56,7 @@ def main(camera_index=0, width=1280, height=720):
                 break
             elif key == ord('s'):
 
-                kcf = tracker.create()
+                kcf = cv2.legacy.TrackerKCF_create()
                 # mask = np.zeros(frame.shape[:2], dtype="uint8")
 
                 # mask = cv2.rectangle(mask, (800, 0), (1280, 720), 255,  -1)
@@ -76,16 +76,19 @@ def main(camera_index=0, width=1280, height=720):
                 # masked = cv2.bitwise_and(frame, frame, mask=mask)
                 masked = frame[0:720, 900:1280]
                 detected, roi = kcf.update(masked)
+
+                # TODO: cambiar para que solo se tenga en cuenta la coordenada Y de la detección
+
                 pt1 = (int(roi[0])+900, int(roi[1]))
 
                 pt2 = (int(roi[0]+900 + roi[2]), int(roi[1] + roi[3]))
 
                 if detected:
                     rectframe = cv2.rectangle(frame, pt1, pt2, 255, -1)
-                    if (ball_position[0] > pt1[0]) and (ball_position[1] > pt1[1] and ball_position[1] < pt2[1]):
+                    if (ball_position[0] > pt1[0] and ball_position[0] < pt2[0]) and (ball_position[1] > pt1[1] and ball_position[1] < pt2[1]):
 
                         if not changed_vec:
-                            if (ball_direction[0] - pt1[0] < ball_direction[1] - pt1[1]) or (ball_direction[0] - pt1[0] < ball_direction[1] - pt2[1]):
+                            if (ball_position[0] - pt1[0] < ball_position[1] - pt1[1]) or (ball_position[0] - pt1[0] < ball_position[1] - pt2[1]):
                                 ball_direction = rebound(ball_direction, "x")
 
                             else:
@@ -129,23 +132,23 @@ def main(camera_index=0, width=1280, height=720):
         cv2.destroyAllWindows()
 
 
-def kalman():
-    kf = cv2.KalmanFilter(4, 2)
+# def kalman():
+#     kf = cv2.KalmanFilter(4, 2)
 
-    # TODO: Initialize the state of the Kalman filter
-    dt = 1/30
-    kf.measurementMatrix = np.array([[1, 0, 0, 0],
-                                    # Measurement matrix np.array of shape (2, 4) and type np.float32
-                                     [0, 1, 0, 0]], dtype=np.float32)
-    kf.transitionMatrix = np.array([[1, 0, dt, 0],
-                                    [0, 1, 0, dt],
-                                    [0, 0, 1, 0],
-                                    # Transition matrix np.array of shape (4, 4) and type np.float32
-                                    [0, 0, 0, 1]], dtype=np.float32)
-    # Process noise covariance np.array of shape (4, 4) and type np.float32
-    kf.processNoiseCov = np.eye(4, dtype=np.float32) * 0.03
+#     # TODO: Initialize the state of the Kalman filter
+#     dt = 1/30
+#     kf.measurementMatrix = np.array([[1, 0, 0, 0],
+#                                     # Measurement matrix np.array of shape (2, 4) and type np.float32
+#                                      [0, 1, 0, 0]], dtype=np.float32)
+#     kf.transitionMatrix = np.array([[1, 0, dt, 0],
+#                                     [0, 1, 0, dt],
+#                                     [0, 0, 1, 0],
+#                                     # Transition matrix np.array of shape (4, 4) and type np.float32
+#                                     [0, 0, 0, 1]], dtype=np.float32)
+#     # Process noise covariance np.array of shape (4, 4) and type np.float32
+#     kf.processNoiseCov = np.eye(4, dtype=np.float32) * 0.03
 
-    return kf
+#     return kf
 
 
 """
@@ -218,7 +221,7 @@ def rebound(vec, dir):
     # new_vec = [np.intp(np.ceil(MOD * np.cos(new_angle))),
     #            np.intp(np.ceil(MOD * np.sin(new_angle)))]
     # print(new_vec)
-    return vx, vy
+    return [vx, vy]
 
 
 if __name__ == "__main__":
