@@ -1,6 +1,6 @@
 import os
 import cv2.typing
-from auxiliary import *
+from src.scripts.auxiliary import *
 import cv2
 from src.calibration.constants import CHESSBOARD_INNER_CORNERS_SIZE, CHESSBOARD_SQUARE_SIZE
 import copy
