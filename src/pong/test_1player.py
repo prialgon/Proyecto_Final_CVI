@@ -2,8 +2,8 @@ import time
 import cv2
 from ball import Ball
 from constants import *
-from tracking import *
-from utils import *
+from tracker import Tracker
+from fps import FPS
 
 cap = cv2.VideoCapture(0)
 
@@ -14,8 +14,14 @@ window_name = "Live Camera - press 'q' to quit"
 cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
 
 ball = Ball([10, 700], [14, -14])
+fps = FPS(frames=50)
 
+trained_right = False
+trained_left = False
 trained = False
+
+kcf_right = None
+kcf_left = None
 
 time.time()
 while True:
@@ -32,15 +38,20 @@ while True:
     if key == ord('q') or key == 27:
         break
     elif key == ord('s'):
-        kcf = create_tracker(frame, 0, 720, 900, 1280)
+        kcf_right = Tracker(frame, 900, 1280, 0, 720, "right")
         trained = True
 
     if trained:
-        detected, roi = update_kcf(kcf, frame, 0, 720, 900, 1280)
-        if detected:
-            frame = draw_box(frame, roi)
-            if ball.check_collision(roi):
-                ball.update_collision(roi)
+        if kcf_right is None:
+            raise ValueError()
+
+        kcf_right.update(frame, 900, 1280, 0, 720)
+
+        if kcf_right.detected:
+            frame = kcf_right.draw_box(frame)
+            if ball.check_collision(kcf_right.roi):
+                ball.update_collision(kcf_right.roi)
+
     else:
         frame = cv2.rectangle(frame, (1000, 200), (1280, 480),
                               color=(0, 0, 255), thickness=2)
@@ -55,7 +66,7 @@ while True:
 
     deltatime = end_time - start_time
 
-    frame = show_fps(frame, deltatime)
+    frame = fps.update(frame, deltatime)
 
     cv2.imshow(window_name, frame)
 
