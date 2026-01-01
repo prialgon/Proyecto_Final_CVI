@@ -1,79 +1,96 @@
 from typing import List, Tuple
 import cv2
 from constants import *
-from utils import get_roi_points
+from utils import *
 
 
 class Ball:
-    def __init__(self, position: List[float], direction: List[float]) -> None:
-        self.position = position
-        self.direction = direction
-        self.changed_direction = False
+    def __init__(
+        self, position: List[float], direction: List[float], radius: int = 5
+    ) -> None:
+        self.x = position[0]
+        self.y = position[1]
+        self.vx = direction[0]
+        self.vy = direction[1]
+
+        self.radius = radius
 
     def update_position(self) -> None:
-        self.position = [
-            self.position[0] + self.direction[0],
-            self.position[1] + self.direction[1],
-        ]
+        self.x += self.vx
+        self.y += self.vy
+
+        self.update_wall_collisions()
+
+    def in_horizontal_edge(self, s: Tuple[Tuple[float, float], Tuple[float, float]]) -> bool:
+        if not (min(s[0][0], s[1][0]) <= self.x <= max(s[0][0], s[1][0])):
+            return False
+
+        if signed_area(s[0], s[1], (self.x, self.y + self.radius)) * \
+                signed_area(s[0], s[1], (self.x, self.y - self.radius)) <= 0:
+            return True
+
+        return False
+
+    def in_vertical_edge(self, s: Tuple[Tuple[float, float], Tuple[float, float]]) -> bool:
+        if not (min(s[0][1], s[1][1]) <= self.y <= max(s[0][1], s[1][1])):
+            return False
+
+        if signed_area(s[0], s[1], (self.x + self.radius, self.y))*signed_area(s[0], s[1], (self.x - self.radius, self.y)) <= 0:
+            return True
+
+        return False
+
+    def update_wall_collisions(self) -> None:
+        # Vertical axis wall collision
+        if self.vx > 0:
+            if self.x + self.radius > WINDOW_WIDTH:
+                self.rebound("x")
+        elif self.vx < 0:
+            if self.x - self.radius < 0:
+                self.rebound("x")
+
+        # Horizontal axis wall collision
+        if self.vy > 0:
+            if self.y + self.radius > WINDOW_HEIGHT:
+                self.rebound("y")
+        elif self.vy < 0:
+            if self.y - self.radius < 0:
+                self.rebound("y")
 
     def rebound(self, axis: str) -> None:
-        vx, vy = self.direction[0], self.direction[1]
-
         if axis == "x":
-            vx = -vx
+            self.vx *= -1
         elif axis == "y":
-            vy = -vy
+            self.vy *= -1
         else:
             raise ValueError(f"Axis {axis} is not valid.")
 
-        self.direction = [vx, vy]
+    def update_paddle_collisions(self, roi: cv2.typing.Rect2d) -> None:
+        (xmin, ymin), (xmax, ymax) = get_roi_points(roi)
 
-    def check_collision(self, roi: cv2.typing.Rect2d) -> bool:
-        p1, p2 = get_roi_points(roi)
-
-        if not (self.position[0] > p1[0] and self.position[0] < p2[0]):
-            return False
-
-        if not (self.position[1] > p1[1] and self.position[1] < p2[1]):
-            return False
-
-        return True
-
-    def update_collision(self, roi: cv2.typing.Rect2d) -> None:
-        p1, p2 = get_roi_points(roi)
-
-        if not self.changed_direction:
-            relative_pos_x = self.position[0] - p1[0]
-            if (relative_pos_x < self.position[1] - p1[1]) or (
-                relative_pos_x < self.position[1] - p2[1]
-            ):
+        if self.vx > 0:
+            if self.in_vertical_edge(((xmin, ymin), (xmin, ymax))):
+                self.x = xmin - self.radius
                 self.rebound("x")
-            else:
+        elif self.vx < 0:
+            if self.in_vertical_edge(((xmax, ymin), (xmax, ymax))):
+                self.x = xmax + self.radius
+                self.rebound("x")
+
+        if self.vy > 0:
+            if self.in_horizontal_edge(((xmin, ymin), (xmax, ymin))):
+                self.y = ymin - self.radius
                 self.rebound("y")
-            self.changed_direction = True
-        else:
-            self.changed_direction = False
-
-    def check_bounding_box_collision(self) -> None:
-        if (
-            self.position[0] > WINDOW_WIDTH - COLLISION_MARGIN
-            or self.position[0] < COLLISION_MARGIN
-        ):
-            self.rebound("x")
-
-        if (
-            self.position[1] > WINDOW_HEIGHT - COLLISION_MARGIN
-            or self.position[1] < COLLISION_MARGIN
-        ):
-            self.rebound("y")
+        elif self.vy < 0:
+            if self.in_horizontal_edge(((xmin, ymax), (xmax, ymax))):
+                self.y = ymax + self.radius
+                self.rebound("y")
 
     def draw(
         self,
         frame: cv2.typing.MatLike,
-        radius: int = 10,
         color: Tuple[int, int, int] = (0, 0, 255),
-        thickness: int = -1,
     ) -> cv2.typing.MatLike:
-        position = (int(self.position[0]), int(self.position[1]))
-        cv2.circle(frame, position, radius, color=color, thickness=thickness)
+        position = (int(self.x), int(self.y))
+        cv2.circle(frame, position, self.radius, color=color, thickness=-1)
         return frame

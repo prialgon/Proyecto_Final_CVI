@@ -13,7 +13,7 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, WINDOW_HEIGHT)
 window_name = "Live Camera - press 'q' to quit"
 cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
 
-ball = Ball([10, 700], [14, -14])
+ball = Ball([10, 700], [14, -14], radius=10)
 fps = FPS(frames=50)
 
 trained_right = False
@@ -30,6 +30,8 @@ while True:
     ret, frame = cap.read()
     if not ret:
         break
+
+    # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     frame = cv2.flip(frame, 1)
 
@@ -59,17 +61,13 @@ while True:
         kcf_left.update(frame, 0, 380, 0, 720)
 
         if kcf_right.detected:
-            print("HI")
             frame = kcf_right.draw_box(frame)
-            print(kcf_right.roi)
-            if ball.check_collision(kcf_right.roi):
-                ball.update_collision(kcf_right.roi)
+            ball.update_paddle_collisions(kcf_right.roi)
 
         if kcf_left.detected:
-            # print(kcf_left.roi)
             frame = kcf_left.draw_box(frame)
-            if ball.check_collision(kcf_left.roi):
-                ball.update_collision(kcf_left.roi)
+            ball.update_paddle_collisions(kcf_left.roi)
+
     else:
         if not trained_right:
             frame = cv2.rectangle(frame, (1000, 200), (1280, 480),
@@ -78,11 +76,9 @@ while True:
             frame = cv2.rectangle(frame, (0, 200), (280, 480),
                                   color=(0, 0, 255), thickness=2)
 
-    frame = ball.draw(frame)
-
-    ball.check_bounding_box_collision()
-
     ball.update_position()
+
+    frame = ball.draw(frame)
 
     end_time = time.time()
 
