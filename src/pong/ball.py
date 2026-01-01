@@ -1,40 +1,79 @@
 from typing import List, Tuple
+import cv2
+from constants import *
+from utils import get_roi_points
 
 
-def updateBallPosition(present, vec) -> List[float]:
-    return [present[0] + vec[0], present[1] + vec[1]]
+class Ball:
+    def __init__(self, position: List[float], direction: List[float]) -> None:
+        self.position = position
+        self.direction = direction
+        self.changed_direction = False
 
+    def update_position(self) -> None:
+        self.position = [
+            self.position[0] + self.direction[0],
+            self.position[1] + self.direction[1],
+        ]
 
-def rebound(vec, dir):
-    vx, vy = vec
+    def rebound(self, axis: str) -> None:
+        vx, vy = self.direction[0], self.direction[1]
 
-    if dir == "x":
-        vx = -vx
-
-    if dir == "y":
-        vy = -vy
-    # MOD = 10
-    # angle = np.atan2(vec[1], vec[0])
-    # print(f"angle: {angle}, {angle*(360/(2*np.pi))}")
-    # new_angle = np.pi - angle
-    # # print(new_angle)
-    # new_vec = [np.intp(np.ceil(MOD * np.cos(new_angle))),
-    #            np.intp(np.ceil(MOD * np.sin(new_angle)))]
-    # print(new_vec)
-    return vx, vy
-
-
-def calculate_collision_with_ball(p1: Tuple[int, int], p2: Tuple[int, int], ball_position):
-    if (ball_position[0] > pt1[0]) and (ball_position[1] > pt1[1] and ball_position[1] < pt2[1]):
-
-    if not changed_vec:
-        if (ball_direction[0] - pt1[0] < ball_direction[1] - pt1[1]) or (ball_direction[0] - pt1[0] < ball_direction[1] - pt2[1]):
-            ball_direction = rebound(ball_direction, "x")
-
+        if axis == "x":
+            vx = -vx
+        elif axis == "y":
+            vy = -vy
         else:
-            ball_direction = rebound(ball_direction, "y")
-        changed_vec = True
-    else:
-        changed_vec = False
+            raise ValueError(f"Axis {axis} is not valid.")
 
-    return ball_direction
+        self.direction = [vx, vy]
+
+    def check_collision(self, roi: cv2.typing.Rect2d) -> bool:
+        p1, p2 = get_roi_points(roi)
+
+        if not (self.position[0] > p1[0] and self.position[0] < p2[0]):
+            return False
+
+        if not (self.position[1] > p1[1] and self.position[1] < p2[1]):
+            return False
+
+        return True
+
+    def update_collision(self, roi: cv2.typing.Rect2d) -> None:
+        p1, p2 = get_roi_points(roi)
+
+        if not self.changed_direction:
+            relative_pos_x = self.position[0] - p1[0]
+            if (relative_pos_x < self.position[1] - p1[1]) or (
+                relative_pos_x < self.position[1] - p2[1]
+            ):
+                self.rebound("x")
+            else:
+                self.rebound("y")
+            self.changed_direction = True
+        else:
+            self.changed_direction = False
+
+    def check_bounding_box_collision(self) -> None:
+        if (
+            self.position[0] > WINDOW_WIDTH - COLLISION_MARGIN
+            or self.position[0] < COLLISION_MARGIN
+        ):
+            self.rebound("x")
+
+        if (
+            self.position[1] > WINDOW_HEIGHT - COLLISION_MARGIN
+            or self.position[1] < COLLISION_MARGIN
+        ):
+            self.rebound("y")
+
+    def draw(
+        self,
+        frame: cv2.typing.MatLike,
+        radius: int = 10,
+        color: Tuple[int, int, int] = (0, 0, 255),
+        thickness: int = -1,
+    ) -> cv2.typing.MatLike:
+        position = (int(self.position[0]), int(self.position[1]))
+        cv2.circle(frame, position, radius, color=color, thickness=thickness)
+        return frame
