@@ -2,7 +2,7 @@ import time
 import cv2
 from ball import Ball
 from constants import *
-from tracker import Tracker
+from tracker import Tracker, AutoTracker
 from fps import FPS
 from text_manager import add_text
 
@@ -14,7 +14,7 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, WINDOW_HEIGHT)
 window_name = "Live Camera - press 'q' to quit"
 cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
 
-ball = Ball([10, 700], [14, -14], radius=10)
+ball = Ball([300, 700], [14, -14], radius=10)
 fps = FPS(frames=50)
 
 trained_right = False
@@ -25,8 +25,12 @@ kcf_right = None
 kcf_left = None
 
 recalibrate_timer = 5
+score = 0
+points = 0
 
 time.time()
+
+kcf_auto = AutoTracker(0, 380, 0, 720, "left")
 while True:
     start_time = time.time()
 
@@ -52,10 +56,12 @@ while True:
 
         
         kcf_right.update(frame, 900, 1280, 0, 720)
+        
 
         # if kcf_right.detected:
             
         frame = kcf_right.draw_box(frame)
+        
         ball.update_paddle_collisions(kcf_right.roi)
 
         if not kcf_right.detected:
@@ -69,16 +75,23 @@ while True:
 
 
     else:
+        
         frame = add_text(frame, f"Place your hand in the red square", "top")
         frame = add_text(frame, f"{int(recalibrate_timer)}", "center", 5)
         frame = cv2.rectangle(frame, (1000, 200), (1280, 480),
                               color=(0, 0, 255), thickness=2)
+   
 
     if trained:
-        ball.update_position()
+        kcf_auto.update(ball.y)
+        
+        ball.update_paddle_collisions(kcf_auto.roi)
 
+        points = ball.update_position()
+        
         frame = ball.draw(frame)
-
+    
+    frame = kcf_auto.draw_box(frame)
     end_time = time.time()
 
     deltatime = end_time - start_time
@@ -86,7 +99,9 @@ while True:
     if recalibrate_timer > 0:
         recalibrate_timer -= deltatime
 
+    score += points
     frame = fps.update(frame, deltatime)
+    frame = add_text(frame, f"Score: {score}", "right_corner")
     
     cv2.imshow(window_name, frame)
 

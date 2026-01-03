@@ -13,16 +13,19 @@ class Ball:
         self.vx = direction[0]
         self.vy = direction[1]
 
+        self.initial = (position, direction)
         self.radius = radius
 
         self.image = cv2.imread('data/small_ball_pixelart.png')
 
-    def update_position(self) -> None:
+    def update_position(self) -> int:
         self.x += self.vx
         self.y += self.vy
 
-        self.update_wall_collisions()
-
+        points = self.update_wall_collisions()
+        
+        return points
+    
     def in_horizontal_edge(self, s: Tuple[Tuple[float, float], Tuple[float, float]]) -> bool:
         if not (min(s[0][0], s[1][0]) <= self.x <= max(s[0][0], s[1][0])):
             return False
@@ -42,14 +45,18 @@ class Ball:
 
         return False
 
-    def update_wall_collisions(self) -> None:
+    def update_wall_collisions(self) -> int:
+
+        points = 0
         # Vertical axis wall collision
         if self.vx > 0:
             if self.x + self.radius > WINDOW_WIDTH:
                 self.rebound("x")
+                points = -1
         elif self.vx < 0:
             if self.x - self.radius < 0:
                 self.rebound("x")
+                points = 1
 
         # Horizontal axis wall collision
         if self.vy > 0:
@@ -58,6 +65,8 @@ class Ball:
         elif self.vy < 0:
             if self.y - self.radius < 0:
                 self.rebound("y")
+
+        return points
 
     def rebound(self, axis: str) -> None:
         if axis == "x":
@@ -101,3 +110,7 @@ class Ball:
         if all(i == 20 for i in roi.shape[:-1]) :
             newFrame[self.y-10:self.y+10, self.x-10:self.x+10] = self.image
         return newFrame
+
+    def reset_position(self):
+        self.x, self.y = self.initial[0]
+        self.vx, self.vy = self.initial[1]
