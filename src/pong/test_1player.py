@@ -74,9 +74,10 @@ while True:
         frame = cv2.rectangle(frame, (1000, 200), (1280, 480),
                               color=(0, 0, 255), thickness=2)
 
-    ball.update_position()
+    if trained:
+        ball.update_position()
 
-    frame = ball.draw(frame)
+        frame = ball.draw(frame)
 
     end_time = time.time()
 
