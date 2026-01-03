@@ -15,6 +15,8 @@ class Ball:
 
         self.radius = radius
 
+        self.image = cv2.imread('data/small_ball_pixelart.png')
+
     def update_position(self) -> None:
         self.x += self.vx
         self.y += self.vy
@@ -92,5 +94,10 @@ class Ball:
         color: Tuple[int, int, int] = (0, 0, 255),
     ) -> cv2.typing.MatLike:
         position = (int(self.x), int(self.y))
-        cv2.circle(frame, position, self.radius, color=color, thickness=-1)
-        return frame
+        # cv2.circle(frame, position, self.radius, color=color, thickness=-1)
+
+        newFrame = frame.copy()
+        roi = newFrame[self.y-10:self.y+10, self.x-10:self.x+10]
+        if all(i == 20 for i in roi.shape[:-1]) :
+            newFrame[self.y-10:self.y+10, self.x-10:self.x+10] = self.image
+        return newFrame

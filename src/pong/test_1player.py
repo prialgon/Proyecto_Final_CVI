@@ -33,6 +33,8 @@ while True:
 
     frame = cv2.flip(frame, 1)
 
+    # bwframe = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
     key = cv2.waitKey(1) & 0xFF
 
     if key == ord('q') or key == 27:
@@ -45,6 +47,7 @@ while True:
         if kcf_right is None:
             raise ValueError()
 
+        
         kcf_right.update(frame, 900, 1280, 0, 720)
 
         if kcf_right.detected:
