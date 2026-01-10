@@ -6,7 +6,7 @@ from tracker import Tracker, AutoTracker
 from fps import FPS
 from text_manager import add_text
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, WINDOW_WIDTH)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, WINDOW_HEIGHT)
@@ -54,14 +54,12 @@ while True:
         if kcf_right is None:
             raise ValueError()
 
-        
         kcf_right.update(frame, 900, 1280, 0, 720)
-        
 
         # if kcf_right.detected:
-            
+
         frame = kcf_right.draw_box(frame)
-        
+
         ball.update_paddle_collisions(kcf_right.roi)
 
         if not kcf_right.detected:
@@ -73,24 +71,22 @@ while True:
         else:
             recalibrate_timer = -100
 
-
     else:
-        
+
         frame = add_text(frame, f"Place your hand in the red square", "top")
         frame = add_text(frame, f"{int(recalibrate_timer)}", "center", 5)
         frame = cv2.rectangle(frame, (1000, 200), (1280, 480),
                               color=(0, 0, 255), thickness=2)
-   
 
     if trained:
         kcf_auto.update(ball.y)
-        
+
         ball.update_paddle_collisions(kcf_auto.roi)
 
         points = ball.update_position()
-        
+
         frame = ball.draw(frame)
-    
+
     frame = kcf_auto.draw_box(frame)
     end_time = time.time()
 
@@ -102,7 +98,7 @@ while True:
     score += points
     frame = fps.update(frame, deltatime)
     frame = add_text(frame, f"Score: {score}", "right_corner")
-    
+
     cv2.imshow(window_name, frame)
 
 cap.release()
