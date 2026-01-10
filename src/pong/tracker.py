@@ -1,3 +1,4 @@
+from typing import List
 import cv2
 from constants import *
 from utils import get_roi_points
@@ -79,13 +80,14 @@ class AutoTracker:
 
         self.ref_x = x_high if name == "right" else x_low + self.img_shape[1]
 
-        self.ball_history = [(y_high + y_low) // 2 for _ in range(4)]
+        self.ball_history: List[float] = [
+            (y_high + y_low) // 2 for _ in range(4)]
 
         self.max_speed = 10
 
         self.pos_y = (y_high + y_low) // 2
 
-    def update(self, ball_y: int) -> None:
+    def update(self, ball_y: float) -> None:
         self.ball_history.append(ball_y)
         ballpos = self.ball_history.pop(0) - self.img_shape[0] // 2
         next_pos = min(abs(self.pos_y - ballpos), self.max_speed)

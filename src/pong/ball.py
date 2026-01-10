@@ -8,10 +8,10 @@ class Ball:
     def __init__(
         self, position: List[float], direction: List[float], radius: int = 5
     ) -> None:
-        self.x = position[0]
-        self.y = position[1]
-        self.vx = direction[0]
-        self.vy = direction[1]
+        self.x: float = position[0]
+        self.y: float = position[1]
+        self.vx: float = direction[0]
+        self.vy: float = direction[1]
 
         self.initial = (position, direction)
         self.radius = radius
@@ -23,9 +23,9 @@ class Ball:
         self.y += self.vy
 
         points = self.update_wall_collisions()
-        
+
         return points
-    
+
     def in_horizontal_edge(self, s: Tuple[Tuple[float, float], Tuple[float, float]]) -> bool:
         if not (min(s[0][0], s[1][0]) <= self.x <= max(s[0][0], s[1][0])):
             return False
@@ -107,7 +107,7 @@ class Ball:
 
         newFrame = frame.copy()
         roi = newFrame[self.y-10:self.y+10, self.x-10:self.x+10]
-        if all(i == 20 for i in roi.shape[:-1]) :
+        if all(i == 20 for i in roi.shape[:-1]):
             newFrame[self.y-10:self.y+10, self.x-10:self.x+10] = self.image
         return newFrame
 
