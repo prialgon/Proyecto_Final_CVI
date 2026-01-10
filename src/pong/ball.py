@@ -16,7 +16,7 @@ class Ball:
         self.initial = (position, direction)
         self.radius = radius
 
-        self.image = cv2.imread('data/small_ball_pixelart.png')
+        self.image = cv2.imread(BALL_IMAGE)
 
     def update_position(self) -> int:
         self.x += self.vx

@@ -24,7 +24,7 @@ class Tracker:
         self.roi = TRACK_WINDOW
         self.detected = False
 
-        self.paddle_img = cv2.imread("data/paddle_pixelart_small.png")
+        self.paddle_img = cv2.imread(PADDLE_IMAGE)
 
         self.img_shape = self.paddle_img.shape[:-1]
 
@@ -74,7 +74,7 @@ class AutoTracker:
 
         self.roi = TRACK_WINDOW
 
-        self.paddle_img = cv2.imread("data/paddle_pixelart_small.png")
+        self.paddle_img = cv2.imread(PADDLE_IMAGE)
 
         self.img_shape = self.paddle_img.shape[:-1]
 

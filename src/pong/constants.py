@@ -9,3 +9,6 @@ WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
 
 COLLISION_MARGIN = 5
+
+PADDLE_IMAGE = "data/paddle_pixelart_small.png"
+BALL_IMAGE = "data/small_ball_pixelart.png"
