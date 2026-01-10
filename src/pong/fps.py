@@ -15,7 +15,7 @@ class FPS():
 
     def show_fps(self, frame: cv2.typing.MatLike) -> cv2.typing.MatLike:
         fps = self.calculate_fps()
-        cv2.putText(frame, f'{int(fps)} FPS', (10, 40), cv2.FONT_HERSHEY_SIMPLEX,
+        cv2.putText(frame, f'{int(np.ceil(fps))} FPS', (10, 40), cv2.FONT_HERSHEY_SIMPLEX,
                     1, (255, 0, 0), 2, cv2.LINE_AA)
         return frame
 

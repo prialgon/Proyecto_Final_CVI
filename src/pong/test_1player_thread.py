@@ -7,6 +7,9 @@ from fps import FPS
 from text_manager import add_text
 from threaded_camera import ThreadedCamera
 
+FIXED_FRAME_RATE = 30
+
+
 cap = ThreadedCamera(0, width=WINDOW_WIDTH, height=WINDOW_HEIGHT)
 
 # Give the camera a moment to warm up
@@ -85,6 +88,10 @@ while True:
 
     if recalibrate_timer > 0:
         recalibrate_timer -= deltatime
+
+    if deltatime < 1/FIXED_FRAME_RATE:
+        deltatime = 1/FIXED_FRAME_RATE
+        time.sleep(1/FIXED_FRAME_RATE - deltatime)
 
     score += points
     frame = fps.update(frame, deltatime)
