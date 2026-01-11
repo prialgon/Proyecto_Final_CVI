@@ -2,9 +2,6 @@
 
 # Proyecto Final de Visión por Ordenador I
 
-Este repositorio contiene el **Proyecto Final de Visión por Ordenador I**.  
-
-
 [![Python](https://img.shields.io/badge/Python-3.x-blue.svg)](https://www.python.org/)
 [![OpenCV](https://img.shields.io/badge/OpenCV-4.x-green.svg)](https://opencv.org/)
 [![Status](https://img.shields.io/badge/Status-Completed-success.svg)](https://github.com/prialgon/Proyecto_Final_CVI)
@@ -67,7 +64,7 @@ Proyecto_Final_CVI/
 
    ```bash
    conda env create -f environment.yml
-    conda activate <env-name>
+   conda activate <env-name>
    ```
 
 3. **Ejecutar:**
