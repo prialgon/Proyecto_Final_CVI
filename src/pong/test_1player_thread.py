@@ -19,7 +19,7 @@ window_name = "Live Camera - press 'q' to quit"
 cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
 
 ball = Ball([300, 700], [14, -14], radius=10)
-fps = FPS(frames=50)
+fps = FPS(historic_frames=50)
 
 trained = False
 kcf_right = None

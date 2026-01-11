@@ -7,53 +7,64 @@ from security_system.utils import *
 kernel = np.ones((5, 5), np.uint8)
 
 
-def security_system(frame: cv2.typing.MatLike, security_pattern: List[str], counter: int) -> Tuple[cv2.typing.MatLike, List[str], int]:
-    detected_shapes = []
+class SecuritySystem:
+    def __init__(self, security_pattern: List[str], debug: bool = False) -> None:
+        self.security_pattern = security_pattern
+        self.counter: int = 0
+        self.finished: bool = False
+        self.debug: bool = debug
 
-    # Flip so that the camera mirrors real video
-    blurred = cv2.GaussianBlur(frame, (11, 11), 1)
-    hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
+    def update(self, frame: cv2.typing.MatLike) -> cv2.typing.MatLike:
+        detected_shapes: List[cv2.typing.MatLike] = []
 
-    # Apply masks
-    red_mask = cv2.inRange(hsv, RED_MASK_LOW[0], RED_MASK_LOW[1]) + \
-        cv2.inRange(hsv, RED_MASK_HIGH[0], RED_MASK_HIGH[1])
+        blurred = cv2.GaussianBlur(frame, (11, 11), 1)
+        hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
-    green_mask = cv2.inRange(
-        hsv, GREEN_MASK[0], GREEN_MASK[1])
+        # Apply masks
+        red_mask = cv2.inRange(hsv, RED_MASK_LOW[0], RED_MASK_LOW[1]) + \
+            cv2.inRange(hsv, RED_MASK_HIGH[0], RED_MASK_HIGH[1])
 
-    blue_mask = cv2.inRange(hsv, BLUE_MASK[0], BLUE_MASK[1])
+        green_mask = cv2.inRange(
+            hsv, GREEN_MASK[0], GREEN_MASK[1])
 
-    purple_mask = cv2.inRange(
-        hsv, PURPLE_MASK[0], PURPLE_MASK[1])
+        blue_mask = cv2.inRange(hsv, BLUE_MASK[0], BLUE_MASK[1])
 
-    # Identification
-    masks = [
-        (red_mask, TRIANGLE, "Red", (0, 0, 255)),
-        (green_mask, SQUARE, "Green", (0, 255, 0)),
-        (purple_mask, PENTAGON, "Purple", (255, 0, 255)),
-        (blue_mask, HEXAGON, "Blue", (255, 0, 0))
-    ]
+        purple_mask = cv2.inRange(
+            hsv, PURPLE_MASK[0], PURPLE_MASK[1])
 
-    for mask, shape, color, draw_color in masks:
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+        # Identification
+        masks = [
+            (red_mask, TRIANGLE, "Red", (0, 0, 255)),
+            (green_mask, SQUARE, "Green", (0, 255, 0)),
+            (purple_mask, PENTAGON, "Purple", (255, 0, 255)),
+            (blue_mask, HEXAGON, "Blue", (255, 0, 0))
+        ]
 
-        contours = get_contours(mask)
+        for mask, shape, color, draw_color in masks:
+            mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+            mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
-        detected_shapes.extend(detect_shapes(
-            frame, contours, shape, color, draw_color))
+            contours = get_contours(mask)
 
-    if len(detected_shapes) != 1:
-        return (frame, security_pattern, 0)
+            detected_shapes.extend(detect_shapes(
+                frame, contours, shape, color, draw_color))
 
-    shape = detected_shapes[0]
+        if len(detected_shapes) != 1:
+            self.counter = 0
+            return frame
 
-    if shape[0] == security_pattern[0]:
-        if counter >= CONSEQUENT_CHECKS:
-            print(shape)
-            security_pattern.pop(0)
-            counter = 0
-        else:
-            counter += 1
+        shape = detected_shapes[0]
 
-    return (frame, security_pattern, counter)
+        if shape[0] == self.security_pattern[0]:
+            if self.counter >= CONSEQUENT_CHECKS:
+                if self.debug:
+                    print(shape)
+                self.security_pattern.pop(0)
+                self.counter = 0
+            else:
+                self.counter += 1
+
+        if len(self.security_pattern) == 0:
+            self.finished = True
+
+        return frame

@@ -1,7 +1,7 @@
 from typing import List
 import cv2
-from constants import *
-from utils import get_roi_points
+from pong.constants import *
+from pong.utils import get_roi_points
 import numpy as np
 
 

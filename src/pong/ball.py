@@ -1,7 +1,15 @@
 from typing import List, Tuple
 import cv2
-from constants import *
-from utils import *
+from pong.constants import *
+from pong.utils import *
+from random import uniform, choice
+from math import atan2, cos, sin, hypot, radians, pi
+
+ANGLE_PERTURBATION = radians(20)
+SPEEDUP_CHANCE = 0.08
+SPEEDUP_FACTOR = 1.03
+MIN_SPEED = 6
+MAX_SPEED = 22
 
 
 class Ball:
@@ -10,8 +18,8 @@ class Ball:
     ) -> None:
         self.x: float = position[0]
         self.y: float = position[1]
-        self.vx: float = direction[0]
-        self.vy: float = direction[1]
+        self.vx: float = int(direction[0] * uniform(0.8, 1) * choice([-1, 1]))
+        self.vy: float = int(direction[1] * uniform(0.8, 1) * choice([-1, 1]))
 
         self.initial = (position, direction)
         self.radius = radius
@@ -76,18 +84,51 @@ class Ball:
         else:
             raise ValueError(f"Axis {axis} is not valid.")
 
+    def rebound_with_small_angle(self) -> None:
+        # Compute current speed and angle
+        speed = hypot(self.vx, self.vy)
+        angle = atan2(self.vy, self.vx)
+
+        # Flip horizontal direction (MANDATORY for bounce)
+        angle = pi - angle
+
+        # Small angle perturbation
+        angle += uniform(-ANGLE_PERTURBATION, ANGLE_PERTURBATION)
+
+        # Rare speed increase
+        if uniform(0, 1) < SPEEDUP_CHANCE:
+            speed *= SPEEDUP_FACTOR
+
+        speed = max(MIN_SPEED, min(MAX_SPEED, speed))
+
+        # New velocity
+        vx = cos(angle) * speed
+        vy = sin(angle) * speed
+
+        # Convert to int safely
+        self.vx = int(round(vx))
+        self.vy = int(round(vy))
+
+        # Safety guards
+        if self.vx == 0:
+            self.vx = 1 if vx > 0 else -1
+        if self.vy == 0:
+            self.vy = 1
+
     def update_paddle_collisions(self, roi: cv2.typing.Rect2d) -> None:
         (xmin, ymin), (xmax, ymax) = get_roi_points(roi)
 
         if self.vx > 0:
             if self.in_vertical_edge(((xmin, ymin), (xmin, ymax))):
-                self.x = xmin - self.radius
-                self.rebound("x")
+                self.x = xmin - self.radius - 1
+                self.rebound_with_small_angle()
+
         elif self.vx < 0:
             if self.in_vertical_edge(((xmax, ymin), (xmax, ymax))):
-                self.x = xmax + self.radius
-                self.rebound("x")
+                self.x = xmax + self.radius + 1
+                self.rebound_with_small_angle()
 
+        # Top/bottom of paddle stays unchanged
         if self.vy > 0:
             if self.in_horizontal_edge(((xmin, ymin), (xmax, ymin))):
                 self.y = ymin - self.radius
@@ -111,6 +152,8 @@ class Ball:
             newFrame[self.y-10:self.y+10, self.x-10:self.x+10] = self.image
         return newFrame
 
-    def reset_position(self):
+    def reset_position(self) -> None:
         self.x, self.y = self.initial[0]
         self.vx, self.vy = self.initial[1]
+        self.vx = int(self.vx * uniform(0.8, 1) * choice([-1, 1]))
+        self.vy = int(self.vy * uniform(0.8, 1) * choice([-1, 1]))

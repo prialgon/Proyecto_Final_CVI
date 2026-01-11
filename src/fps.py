@@ -1,11 +1,13 @@
 import numpy as np
 import cv2
+import time
 
 
 class FPS():
-    def __init__(self, frames: int = 5) -> None:
-        self.frames = frames
+    def __init__(self, max_fps: float, historic_frames: int = 5) -> None:
+        self.frames = historic_frames
         self.times = []
+        self.max_fps = max_fps
 
     def add_frame(self, time: float) -> None:
         self.times.append(time)
@@ -28,3 +30,10 @@ class FPS():
         frame = self.show_fps(frame)
 
         return frame
+
+    def limit(self, deltatime: float) -> float:
+        if deltatime < 1/self.max_fps:
+            time.sleep(1/self.max_fps - deltatime)
+            return 1/self.max_fps
+        else:
+            return deltatime
