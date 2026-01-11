@@ -153,3 +153,4 @@ class PlayerSelector:
         self.finished = False
         self.gamemode = 0
         self.start_time = None
+        self.mog.clear()
