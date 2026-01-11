@@ -27,10 +27,9 @@ class PongGame1P:
         # ---------- PLAYER TRACKING ----------
         if self.trained and self.kcf_player:
             self.kcf_player.update(frame, 900, 1280, 0, 720)
-
+            frame = self.kcf_player.draw_box(frame)
+            self.ball.update_paddle_collisions(self.kcf_player.roi)
             if self.kcf_player.detected:
-                frame = self.kcf_player.draw_box(frame)
-                self.ball.update_paddle_collisions(self.kcf_player.roi)
                 self.recalibrate_timer = -100
             else:
                 if self.recalibrate_timer < 0:
@@ -56,12 +55,12 @@ class PongGame1P:
             )
 
         # ---------- AUTO TRAIN ----------
-        if not self.trained:
+        if self.recalibrate_timer > 0:
             self.recalibrate_timer -= deltatime
-            if self.recalibrate_timer <= 0:
-                self.kcf_player = Tracker(frame, 900, 1280, 0, 720, "right")
-                self.trained = True
-                self.recalibrate_timer = -100
+
+        if self.recalibrate_timer <= 0 and self.recalibrate_timer != -100:
+            self.kcf_player = Tracker(frame, 900, 1280, 0, 720, "right")
+            self.trained = True
 
         # ---------- AI + BALL ----------
         if self.trained:
@@ -103,88 +102,101 @@ class PongGame2P:
 
         self.score_right = 0
         self.score_left = 0
+        self.points = 0
 
-    def train_next(self, frame):
-        if not self.trained_right:
-            self.kcf_right = Tracker(frame, 900, 1280, 0, 720, "right")
-            self.trained_right = True
-            self.recalibrate_right = -100
-        elif not self.trained_left:
-            self.kcf_left = Tracker(frame, 0, 380, 0, 720, "left")
-            self.trained_left = True
-            self.recalibrate_left = -100
+        self.togglePlayer = True
 
     def update(self, frame, deltatime):
         # ---------- RIGHT PLAYER ----------
-        if self.trained_right:
-            self.kcf_right.update(frame, 900, 1280, 0, 720)
 
-            if self.kcf_right.detected:
+        if not self.trained_right and not self.trained_left:
+            frame = add_text(frame, "Place your hands in the red squares", "top")
+            frame = add_text(
+                frame, f"{int(self.recalibrate_left)}", "center", 5)
+            frame = cv2.rectangle(
+                frame, (1000, 200), (1280, 480),
+                (0, 0, 255), 2
+            )
+            frame = cv2.rectangle(
+                frame, (0, 200), (280, 480),
+                (0, 0, 255), 2
+            )
+
+        else:
+            if self.trained_right:
+                if self.togglePlayer:
+                    self.kcf_right.update(frame, 900, 1280, 0, 720)
                 frame = self.kcf_right.draw_box(frame)
                 self.ball.update_paddle_collisions(self.kcf_right.roi)
-                self.recalibrate_right = -100
-            else:
-                if self.recalibrate_right < 0:
-                    self.recalibrate_right = 5
+                if self.kcf_right.detected:
+                    self.recalibrate_right = -100
+                else:
+                    if self.recalibrate_right < 0:
+                        self.recalibrate_right = 5
 
-                frame = cv2.rectangle(
-                    frame, (1000, 200), (1280, 480),
-                    (0, 0, 255), 2
-                )
-                frame = add_text(
-                    frame,
-                    f"Right recalibrating in {int(self.recalibrate_right)}",
-                    "top"
-                )
+                    frame = cv2.rectangle(
+                        frame, (1000, 200), (1280, 480),
+                        (0, 0, 255), 2
+                    )
+                    frame = add_text(
+                        frame,
+                        f"Right recalibrating in {int(self.recalibrate_right)}",
+                        "top"
+                    )
 
-        # ---------- LEFT PLAYER ----------
-        if self.trained_left:
-            self.kcf_left.update(frame, 0, 380, 0, 720)
-
-            if self.kcf_left.detected:
+            # ---------- LEFT PLAYER ----------
+            if self.trained_left:
+                if not self.togglePlayer:
+                    self.kcf_left.update(frame, 0, 380, 0, 720)
                 frame = self.kcf_left.draw_box(frame)
                 self.ball.update_paddle_collisions(self.kcf_left.roi)
-                self.recalibrate_left = -100
-            else:
-                if self.recalibrate_left < 0:
-                    self.recalibrate_left = 5
+                if self.kcf_left.detected:
+                    self.recalibrate_left = -100
+                else:
+                    if self.recalibrate_left < 0:
+                        self.recalibrate_left = 5
 
-                frame = cv2.rectangle(
-                    frame, (0, 200), (280, 480),
-                    (0, 0, 255), 2
-                )
-                frame = add_text(
-                    frame,
-                    f"Left recalibrating in {int(self.recalibrate_left)}",
-                    "top"
-                )
+                    frame = cv2.rectangle(
+                        frame, (0, 200), (280, 480),
+                        (0, 0, 255), 2
+                    )
+                    frame = add_text(
+                        frame,
+                        f"Left recalibrating in {int(self.recalibrate_left)}",
+                        "top2"
+                    )
 
         # ---------- AUTO RECALIBRATION ----------
         if self.recalibrate_right > 0:
             self.recalibrate_right -= deltatime
-        elif self.recalibrate_right == 0:
+        
+        if self.recalibrate_right <= 0 and self.recalibrate_right != -100:
             self.kcf_right = Tracker(frame, 900, 1280, 0, 720, "right")
-            self.recalibrate_right = -100
+            self.trained_right = True
+            # self.recalibrate_right = -100
 
         if self.recalibrate_left > 0:
             self.recalibrate_left -= deltatime
-        elif self.recalibrate_left == 0:
+        
+        if self.recalibrate_left <= 0 and self.recalibrate_left != -100:
             self.kcf_left = Tracker(frame, 0, 380, 0, 720, "left")
-            self.recalibrate_left = -100
+            self.trained_left = True
+            # self.recalibrate_left = -100
 
         # ---------- BALL ----------
-        points = self.ball.update_position()
-        frame = self.ball.draw(frame)
+        if self.trained_left and self.trained_right:
+            self.points = self.ball.update_position()
+            frame = self.ball.draw(frame)
 
         # ---------- SCORE ----------
-        if points > 0:
-            self.score_left += points
-        elif points < 0:
-            self.score_right += abs(points)
+        if self.points > 0:
+            self.score_right += self.points
+        elif self.points < 0:
+            self.score_left += abs(self.points)
 
-        if points != 0:
+        if self.points != 0:
             self.ball.reset_position()
 
         frame = show_score(frame, self.score_left, self.score_right)
-
+        self.togglePlayer = not self.togglePlayer
         return frame

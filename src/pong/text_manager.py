@@ -10,6 +10,11 @@ def add_text(frame: cv2.typing.MatLike, text: str, position: str, size: float = 
                              50 + int(text_height / 2))
         cv2.putText(frame, text, TopCoordinates, cv2.FONT_HERSHEY_SIMPLEX,
                 size, (0, 0, 0), 2, cv2.LINE_AA)
+    elif position == "top2":
+        TopCoordinates = (int(frame.shape[1] / 2) - int(text_width / 2),
+                          100 + int(text_height / 2))
+        cv2.putText(frame, text, TopCoordinates, cv2.FONT_HERSHEY_SIMPLEX,
+                    size, (0, 0, 0), 2, cv2.LINE_AA)
     elif position == "center":
         CenterCoordinates = (int(frame.shape[1] / 2) - int(text_width / 2),
                              int(frame.shape[0] / 2) + int(text_height / 2))

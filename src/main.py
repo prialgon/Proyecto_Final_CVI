@@ -19,6 +19,7 @@ time.sleep(1.0)
 security_system = SecuritySystem(
     security_pattern=[SQUARE, TRIANGLE, HEXAGON, PENTAGON])
 
+
 # Transition
 transition_system = TransitionSystem(duration=2)
 
