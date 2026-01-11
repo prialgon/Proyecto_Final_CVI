@@ -96,7 +96,3 @@ except Exception as e:
 finally:
     cap.release()
     cv2.destroyAllWindows()
-<<<<<<< HEAD
-=======
-    
->>>>>>> 4caf77e1ba968bd6fab3ae2090ef4d75a4cd9942
