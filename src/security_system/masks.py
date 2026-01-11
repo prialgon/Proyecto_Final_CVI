@@ -24,7 +24,8 @@ GREEN_MASK = (np.array([45, 100, 70]), np.array([85, 255, 255]))
 BLUE_MASK = (np.array([90, 100, 70]), np.array([125, 255, 255]))
 
 # PURPLE
-PURPLE_MASK = (np.array([125, 100, 70]), np.array([160, 255, 255]))
+# PURPLE_MASK = (np.array([125, 100, 70]), np.array([160, 255, 255]))
+PURPLE_MASK = (np.array([144, 160, 99]), np.array([174, 255, 166]))
 
 
 # Calibrated masks

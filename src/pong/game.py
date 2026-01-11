@@ -13,7 +13,7 @@ from pong.score import show_score
 
 
 class PongGame1P:
-    def __init__(self, ball: Ball, obj_score: int, win_time: float = 5) -> None:
+    def __init__(self, ball: Ball, obj_score: int, win_time: float = 3) -> None:
         self.kcf_player = None
         self.kcf_auto = AutoTracker(0, 380, 0, 720, "left")
         self.ball = ball
@@ -72,7 +72,7 @@ class PongGame1P:
             self.trained = True
 
         # ---------- AI + BALL ----------
-        if self.trained:
+        if self.trained and self.recalibrate_timer <= 0:
             self.kcf_auto.update(self.ball.y)
             self.ball.update_paddle_collisions(self.kcf_auto.roi)
 
@@ -219,7 +219,7 @@ class PongGame2P:
             # self.recalibrate_left = -100
 
         # ---------- BALL ----------
-        if self.trained_left and self.trained_right:
+        if self.trained_left and self.trained_right and self.recalibrate_left < 0 and self.recalibrate_right < 0:
             self.points = self.ball.update_position()
             frame = self.ball.draw(frame)
 
