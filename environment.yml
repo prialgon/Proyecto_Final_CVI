@@ -1,4 +1,4 @@
-name: voi-lab
+name: pong-project
 channels:
   - defaults
 dependencies:
