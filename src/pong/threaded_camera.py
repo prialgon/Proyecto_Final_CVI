@@ -10,15 +10,18 @@ class ThreadedCamera:
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
+        self.status = False
+        self.frame = None
+
+        self.online = True
         self.thread = Thread(target=self.update, args=())
         self.thread.daemon = True
         self.thread.start()
 
-        self.status = False
-        self.frame = None
+        
 
     def update(self) -> None:
-        while True:
+        while self.online:
             if self.capture.isOpened():
                 (self.status, self.frame) = self.capture.read()
             else:
@@ -31,3 +34,4 @@ class ThreadedCamera:
 
     def release(self) -> None:
         self.capture.release()
+        self.online = False
