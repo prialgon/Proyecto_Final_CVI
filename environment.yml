@@ -139,4 +139,4 @@ dependencies:
       - tqdm==4.67.1
       - tzdata==2025.2
       - zipp==3.23.0
-prefix: C:\Users\alpri\anaconda3\envs\voi-lab
+prefix: C:\Users\alpri\anaconda3\envs\pong-project
