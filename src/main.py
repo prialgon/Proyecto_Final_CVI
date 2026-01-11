@@ -18,12 +18,13 @@ time.sleep(1.0)
 security_system = SecuritySystem(
     security_pattern=[SQUARE, TRIANGLE, HEXAGON, PENTAGON], consequent_checks=CONSEQUENT_CHECKS)
 
+window_name = "Pong - Press q to close"
 
 # Transition
 transition_system = TransitionSystem(duration=3)
 
 # FPS
-fps = FPS(max_fps=30, historic_frames=50)
+fps = FPS(max_fps=35, historic_frames=20)
 
 # Pong
 selector = PlayerSelector(3)
@@ -48,9 +49,9 @@ try:
         frame = cv2.flip(frame, 1)
 
         # ----- States -----
-        if security_system.finished:  # SET TO NOT WHEN WE WANT TO ACTIVATE
+        if not security_system.finished:  # SET TO NOT WHEN WE WANT TO ACTIVATE
             frame = security_system.update(frame)
-        elif transition_system.finished:  # SET TO NOT WHEN WE WANT TO ACTIVATE
+        elif not transition_system.finished:  # SET TO NOT WHEN WE WANT TO ACTIVATE
             frame = transition_system.update(frame, deltatime)
         else:
             if not pong_game:
@@ -84,13 +85,14 @@ try:
                 frame = pong_game.update(frame, deltatime)
 
         # ----- Show Frame -----
-        cv2.imshow("window", frame)
+        cv2.imshow(window_name, frame)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
+            cap.release()
+            cv2.destroyAllWindows()
             break
 except Exception as e:
     print(f"ERROR - {e}")
 finally:
     cap.release()
     cv2.destroyAllWindows()
-    cap.thread.join()
