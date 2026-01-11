@@ -1,8 +1,8 @@
 import os
 import cv2.typing
-from src.scripts.auxiliary import *
+from auxiliary import *
 import cv2
-from src.calibration.constants import CHESSBOARD_INNER_CORNERS_SIZE, CHESSBOARD_SQUARE_SIZE
+from constants import CHESSBOARD_INNER_CORNERS_SIZE, CHESSBOARD_SQUARE_SIZE
 import copy
 from typing import List
 import numpy as np
