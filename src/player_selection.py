@@ -71,6 +71,10 @@ class PlayerSelector:
         if self.finished:
             return
 
+        if self.start_time and (time.time() - self.start_time) >= self.selection_time:
+            self.gamemode = self.current_choice
+            self.finished = True
+
         hand_pos = self.get_hand_position(frame)
 
         if hand_pos is None:
@@ -90,10 +94,6 @@ class PlayerSelector:
         if selected != self.current_choice:
             self.current_choice = selected
             self.start_time = time.time() if selected else None
-
-        if self.start_time and (time.time() - self.start_time) >= self.selection_time:
-            self.gamemode = self.current_choice
-            self.finished = True
 
     def draw_bar(self, frame, box_x) -> None:
         if self.start_time is None:
