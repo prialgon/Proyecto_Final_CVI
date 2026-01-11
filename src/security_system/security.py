@@ -8,11 +8,12 @@ kernel = np.ones((5, 5), np.uint8)
 
 
 class SecuritySystem:
-    def __init__(self, security_pattern: List[str], debug: bool = False) -> None:
+    def __init__(self, security_pattern: List[str], consequent_checks: int = CONSEQUENT_CHECKS, debug: bool = False) -> None:
         self.security_pattern = security_pattern
         self.counter: int = 0
         self.finished: bool = False
         self.debug: bool = debug
+        self.consequent_checks = consequent_checks
 
     def update(self, frame: cv2.typing.MatLike) -> cv2.typing.MatLike:
         detected_shapes: List[cv2.typing.MatLike] = []
@@ -58,7 +59,7 @@ class SecuritySystem:
         shape = detected_shapes[0]
 
         if shape[0] == self.security_pattern[0]:
-            if self.counter >= CONSEQUENT_CHECKS:
+            if self.counter >= self.consequent_checks:
                 if self.debug:
                     print(shape)
                 self.security_pattern.pop(0)
