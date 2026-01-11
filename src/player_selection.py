@@ -95,7 +95,7 @@ class PlayerSelector:
             self.current_choice = selected
             self.start_time = time.time() if selected else None
 
-    def draw_bar(self, frame, box_x) -> None:
+    def draw_bar(self, frame, box_x, color) -> None:
         if self.start_time is None:
             return
 
@@ -107,7 +107,7 @@ class PlayerSelector:
             frame,
             (box_x, self.y + self.height + 10),
             (box_x + bar_width, self.y + self.height + 30),
-            (0, 255, 0),
+            color,
             -1
         )
 
@@ -123,28 +123,33 @@ class PlayerSelector:
 
         # Labels
         cv2.putText(frame, "1 PLAYER",
-                    (self.x_left + 100, self.y + 150),
+                    (self.x_left + 110, self.y + 160),
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
         cv2.putText(frame, "2 PLAYERS",
-                    (self.x_right + 80, self.y + 150),
+                    (self.x_right + 110, self.y + 160),
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
         # Highlight + progress
         if self.current_choice == 1:
             cv2.rectangle(frame, (self.x_left, self.y),
                           (self.x_left + self.width, self.y + self.height),
-                          (0, 255, 0), 4)
-            self.draw_bar(frame, self.x_left)
+                          (255, 0, 0), 4)
+            self.draw_bar(frame, self.x_left, (255, 0, 0))
 
         elif self.current_choice == 2:
             cv2.rectangle(frame, (self.x_right, self.y),
                           (self.x_right + self.width, self.y + self.height),
-                          (0, 255, 0), 4)
-            self.draw_bar(frame, self.x_right)
+                          (0, 125, 255), 4)
+            self.draw_bar(frame, self.x_right, (0, 125, 255))
 
         # Hand debug
         if self.prev_hand_pos:
             cv2.circle(frame, self.prev_hand_pos, 12, (0, 0, 255), -1)
 
         return frame
+
+    def restart(self) -> None:
+        self.finished = False
+        self.gamemode = 0
+        self.start_time = None

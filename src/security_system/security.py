@@ -3,6 +3,7 @@ import numpy as np
 from security_system.constants import *
 from security_system.masks import *
 from security_system.utils import *
+from pong.text_manager import add_text
 
 kernel = np.ones((5, 5), np.uint8)
 
@@ -14,6 +15,7 @@ class SecuritySystem:
         self.finished: bool = False
         self.debug: bool = debug
         self.consequent_checks = consequent_checks
+        self.initial_length = len(security_pattern)
 
     def update(self, frame: cv2.typing.MatLike) -> cv2.typing.MatLike:
         detected_shapes: List[cv2.typing.MatLike] = []
@@ -51,6 +53,9 @@ class SecuritySystem:
                 frame, contours, shape, color, draw_color))
 
         # frame = cv2.bitwise_and(frame, frame, mask=green_mask)
+
+        frame = add_text(
+            frame, f"{self.initial_length - len(self.security_pattern)}/{self.initial_length}", "top", 1, color=(0, 255, 0))
 
         if len(detected_shapes) != 1:
             self.counter = 0

@@ -1,4 +1,7 @@
+import time
+from typing import Tuple
 import cv2
+from numpy import true_divide
 from pong.ball import Ball
 from pong.constants import *
 from pong.tracker import Tracker, AutoTracker
@@ -10,10 +13,11 @@ from pong.score import show_score
 
 
 class PongGame1P:
-    def __init__(self, ball: Ball, kcf_auto: AutoTracker) -> None:
+    def __init__(self, ball: Ball, obj_score: int, win_time: float = 5) -> None:
         self.kcf_player = None
-        self.kcf_auto = kcf_auto
+        self.kcf_auto = AutoTracker(0, 380, 0, 720, "left")
         self.ball = ball
+        self.obj_score = obj_score
 
         self.trained = False
         self.recalibrate_timer = 5
@@ -22,6 +26,10 @@ class PongGame1P:
         self.player_score = 0
         self.ai_score = 0
         self.points = 0
+
+        self.win_time = win_time
+        self.finished_win = False
+        self.start_win_time = None
 
     def update(self, frame, deltatime) -> cv2.typing.MatLike:
         # ---------- PLAYER TRACKING ----------
@@ -42,11 +50,12 @@ class PongGame1P:
                 frame = add_text(
                     frame,
                     f"Recalibrating in {int(self.recalibrate_timer)}",
-                    "top"
+                    "top2"
                 )
 
         else:
-            frame = add_text(frame, "Place your hand in the red square", "top")
+            frame = add_text(
+                frame, "Place your hand in the red square", "top2")
             frame = add_text(
                 frame, f"{int(self.recalibrate_timer)}", "center", 5)
             frame = cv2.rectangle(
@@ -85,11 +94,32 @@ class PongGame1P:
 
         return frame
 
+    def win(self, frame: cv2.typing.MatLike) -> Tuple[bool, cv2.typing.MatLike]:
+        text = ""
+        someone_win = False
+        if self.player_score >= self.obj_score:
+            someone_win = True
+            text = "YOU WIN!!!"
+        elif self.ai_score >= self.obj_score:
+            someone_win = True
+            text = "YOU LOSE!!!"
+
+        if someone_win and self.start_win_time is None:
+            self.start_win_time = time.time()
+
+        frame = add_text(frame, text, "center", 3, (0, 255, 255))
+
+        if self.start_win_time is not None:
+            if time.time() - self.start_win_time >= self.win_time:
+                self.finished_win = True
+
+        return (someone_win, frame)
+
 
 class PongGame2P:
-    def __init__(self, ball: Ball, kcf_auto: AutoTracker) -> None:
-        self.kcf_auto = kcf_auto
+    def __init__(self, ball: Ball, obj_score: int, win_time: float = 5) -> None:
         self.ball = ball
+        self.obj_score = obj_score
 
         self.kcf_right = None
         self.kcf_left = None
@@ -106,11 +136,16 @@ class PongGame2P:
 
         self.togglePlayer = True
 
+        self.win_time = win_time
+        self.finished_win = False
+        self.start_win_time = None
+
     def update(self, frame, deltatime):
         # ---------- RIGHT PLAYER ----------
 
         if not self.trained_right and not self.trained_left:
-            frame = add_text(frame, "Place your hands in the red squares", "top")
+            frame = add_text(
+                frame, "Place your hands in the red squares", "top2")
             frame = add_text(
                 frame, f"{int(self.recalibrate_left)}", "center", 5)
             frame = cv2.rectangle(
@@ -123,7 +158,7 @@ class PongGame2P:
             )
 
         else:
-            if self.trained_right:
+            if self.trained_right and self.kcf_right is not None:
                 if self.togglePlayer:
                     self.kcf_right.update(frame, 900, 1280, 0, 720)
                 frame = self.kcf_right.draw_box(frame)
@@ -141,11 +176,11 @@ class PongGame2P:
                     frame = add_text(
                         frame,
                         f"Right recalibrating in {int(self.recalibrate_right)}",
-                        "top"
+                        "top3"
                     )
 
             # ---------- LEFT PLAYER ----------
-            if self.trained_left:
+            if self.trained_left and self.kcf_left is not None:
                 if not self.togglePlayer:
                     self.kcf_left.update(frame, 0, 380, 0, 720)
                 frame = self.kcf_left.draw_box(frame)
@@ -169,7 +204,7 @@ class PongGame2P:
         # ---------- AUTO RECALIBRATION ----------
         if self.recalibrate_right > 0:
             self.recalibrate_right -= deltatime
-        
+
         if self.recalibrate_right <= 0 and self.recalibrate_right != -100:
             self.kcf_right = Tracker(frame, 900, 1280, 0, 720, "right")
             self.trained_right = True
@@ -177,7 +212,7 @@ class PongGame2P:
 
         if self.recalibrate_left > 0:
             self.recalibrate_left -= deltatime
-        
+
         if self.recalibrate_left <= 0 and self.recalibrate_left != -100:
             self.kcf_left = Tracker(frame, 0, 380, 0, 720, "left")
             self.trained_left = True
@@ -200,3 +235,24 @@ class PongGame2P:
         frame = show_score(frame, self.score_left, self.score_right)
         self.togglePlayer = not self.togglePlayer
         return frame
+
+    def win(self, frame: cv2.typing.MatLike) -> Tuple[bool, cv2.typing.MatLike]:
+        text = ""
+        someone_win = False
+        if self.score_left >= self.obj_score:
+            someone_win = True
+            text = "LEFT WINS!!!"
+        elif self.score_right >= self.obj_score:
+            someone_win = True
+            text = "RIGHT WINS!!!"
+
+        if someone_win and self.start_win_time is None:
+            self.start_win_time = time.time()
+
+        frame = add_text(frame, text, "center", 3, (0, 255, 255))
+
+        if self.start_win_time is not None:
+            if time.time() - self.start_win_time >= self.win_time:
+                self.finished_win = True
+
+        return (someone_win, frame)

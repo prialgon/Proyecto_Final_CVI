@@ -33,10 +33,10 @@ class TransitionSystem:
 
         if fill_width > 0:
             cv2.rectangle(frame, top_left, fill_bottom_right,
-                          (0, 255, 255), -1)
+                          (0, 255, 0), -1)
 
         text = f"LOADING PONG... {int(progress * 100)}%"
         cv2.putText(frame, text, (top_left[0], top_left[1] - 15),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
         return frame

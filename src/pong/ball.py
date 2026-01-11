@@ -5,9 +5,9 @@ from pong.utils import *
 from random import uniform, choice
 from math import atan2, cos, sin, hypot, radians, pi
 
-ANGLE_PERTURBATION = radians(20)
-SPEEDUP_CHANCE = 0.08
-SPEEDUP_FACTOR = 1.03
+ANGLE_PERTURBATION = radians(10)
+SPEEDUP_CHANCE = 0.25
+SPEEDUP_FACTOR = 1.1
 MIN_SPEED = 6
 MAX_SPEED = 22
 
@@ -24,7 +24,10 @@ class Ball:
         self.initial = (position, direction)
         self.radius = radius
 
-        self.image = cv2.imread(BALL_IMAGE)
+        self.image = cv2.imread(BALL_IMAGE, cv2.IMREAD_UNCHANGED)
+
+        if self.image is None:
+            raise ValueError("BALL IMAGE NOT FOUND")
 
     def update_position(self) -> int:
         self.x += self.vx
@@ -141,16 +144,47 @@ class Ball:
     def draw(
         self,
         frame: cv2.typing.MatLike,
-        color: Tuple[int, int, int] = (0, 0, 255),
+        color: Tuple[int, int, int] = (0, 0, 255)
     ) -> cv2.typing.MatLike:
-        position = (int(self.x), int(self.y))
-        # cv2.circle(frame, position, self.radius, color=color, thickness=-1)
 
-        newFrame = frame.copy()
-        roi = newFrame[self.y-10:self.y+10, self.x-10:self.x+10]
-        if all(i == 20 for i in roi.shape[:-1]):
-            newFrame[self.y-10:self.y+10, self.x-10:self.x+10] = self.image
-        return newFrame
+        # 1. Convert float coordinates to integers (Required for slicing)
+        x_int = int(self.x)
+        y_int = int(self.y)
+
+        # 2. Get dimensions
+        # 'h' is height, 'w' is width
+        h, w, channels = self.image.shape
+        frame_h, frame_w, _ = frame.shape
+
+        # 3. Boundary Check (Prevents Crashing)
+        # We check both positive overflow (> frame size) and negative (< 0)
+        if (y_int + h > frame_h) or (x_int + w > frame_w) or (y_int < 0) or (x_int < 0):
+            return frame
+
+        # 4. Create copy to avoid modifying original frame by reference
+        new_frame = frame.copy()
+
+        # 5. Extract Region of Interest (ROI)
+        # We use the integer coordinates here
+        roi = new_frame[y_int:y_int+h, x_int:x_int+w]
+
+        # 6. Prepare Blending Data
+        ball_rgb = self.image[:, :, 0:3]
+        alpha_channel = self.image[:, :, 3]
+
+        # Normalize alpha to 0.0 - 1.0
+        mask = alpha_channel / 255.0
+        inv_mask = 1.0 - mask
+
+        # 7. Blend the images
+        for c in range(0, 3):
+            roi[:, :, c] = (mask * ball_rgb[:, :, c] +
+                            inv_mask * roi[:, :, c])
+
+        # 8. Put the blended ROI back into the frame
+        new_frame[y_int:y_int+h, x_int:x_int+w] = roi
+
+        return new_frame
 
     def reset_position(self) -> None:
         self.x, self.y = self.initial[0]
