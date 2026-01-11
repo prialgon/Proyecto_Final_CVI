@@ -49,6 +49,8 @@ class SecuritySystem:
             detected_shapes.extend(detect_shapes(
                 frame, contours, shape, color, draw_color))
 
+        # frame = cv2.bitwise_and(frame, frame, mask=green_mask)
+
         if len(detected_shapes) != 1:
             self.counter = 0
             return frame
