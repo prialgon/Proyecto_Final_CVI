@@ -45,7 +45,7 @@ class Tracker:
 
     def draw_box(self, frame: cv2.typing.MatLike, thickness: int = -1, color: int = 255) -> cv2.typing.MatLike:
         p1, p2 = get_roi_points(self.roi)
-        newFrame = frame.copy()
+        newFrame = frame
 
         if p1[1] <= 0:
             newFrame[0:self.img_shape[0],
@@ -102,7 +102,7 @@ class AutoTracker:
 
     def draw_box(self, frame: cv2.typing.MatLike, thickness: int = -1, color: int = 255) -> cv2.typing.MatLike:
         p1, p2 = get_roi_points(self.roi)
-        newFrame = frame.copy()
+        newFrame = frame
 
         if p1[1] <= 0:
             newFrame[0:self.img_shape[0],

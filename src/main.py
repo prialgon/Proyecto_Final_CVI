@@ -87,10 +87,12 @@ try:
         cv2.imshow("window", frame)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
+            cap.release()
+            cv2.destroyAllWindows()
             break
 except Exception as e:
     print(f"ERROR - {e}")
 finally:
     cap.release()
     cv2.destroyAllWindows()
-    cap.thread.join()
+    
